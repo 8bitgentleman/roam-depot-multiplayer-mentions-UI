@@ -1,5 +1,6 @@
 import getBlockUidFromTarget from "roamjs-components/dom/getBlockUidFromTarget";
 import { renderMentionsButton } from "./components/userMentsionsSelect";
+import createHTMLObserver from "roamjs-components/dom/createHTMLObserver";
 
 const extension_name = "Mentions UI"
 const panelConfig = {
@@ -29,6 +30,7 @@ const panelConfig = {
   ]
 };
 const unloads = new Set();
+let attributeObserver;
 
 function getAllUsernames() {  
   let query = `[:find ?name 
@@ -62,7 +64,7 @@ function findUserPageSpans(names) {
           // Log the direct child span and the data-link-title value
           // console.log(directChildSpan, dataLinkTitleValue);
           results.push({
-            "span":directChildSpan,
+            "span":firstChildWithDataLinkTitle,
             "page":dataLinkTitleValue,
             "blockUid":blockUid,
           })
@@ -76,19 +78,69 @@ function findUserPageSpans(names) {
   return results;
 }
 
+// Function to process a single block
+function processBlock(spanElement, names) {
+  // Your existing logic to process a single span element
+  const results = [];
+  const firstChildWithDataLinkTitle = spanElement.querySelector('[data-link-title]');
+  
+  if (firstChildWithDataLinkTitle && names.some(name => firstChildWithDataLinkTitle.getAttribute('data-link-title').includes(name))) {
+    // console.log(firstChildWithDataLinkTitle.getAttribute('data-link-title'));
+    
+    const dataLinkTitleValue = firstChildWithDataLinkTitle.getAttribute('data-link-title');
+    const blockUid = getBlockUidFromTarget(spanElement);
+    results.push({
+      "span": firstChildWithDataLinkTitle,
+      "page": dataLinkTitleValue,
+      "blockUid": blockUid,
+    });
+    renderMentionsButton(firstChildWithDataLinkTitle, dataLinkTitleValue, blockUid);
+  }
+  return results;
+}
+
+// Callback function to be used with createHTMLObserver
+function spanObserverCallback(spanElement) {
+  const namesToObserve = ['Matt Vogel', 'test']; // Replace with the actual names you're interested in
+  const results = processBlock(spanElement, namesToObserve);
+  if (results.length>0) {
+    console.log(results);
+  }
+  
+}
+
+const updateAttributeObserver = () => {
+  if (attributeObserver) {
+    attributeObserver.disconnect();
+  }
+  attributeObserver = createHTMLObserver({
+    className: "roam-block",
+    tag: "DIV",
+    useBody: true,
+    callback: spanObserverCallback,
+  });
+};
+
 async function onload({extensionAPI}) {
   // set defaults if they dont' exist
 
   extensionAPI.settings.panel.create(panelConfig);
-  const spans = findUserPageSpans(getAllUsernames())
-  spans.forEach(s => {        
-    renderMentionsButton(s.span, s.page, s.blockUid);
+  // observeSpanElements()
+  // const spans = findUserPageSpans(getAllUsernames())
+  // spans.forEach(s => {        
+  //   renderMentionsButton(s.span, s.page, s.blockUid);
+  // });
+  updateAttributeObserver()
+  unloads.add(() => {
+    attributeObserver.disconnect();;
   });
   console.log(`load ${extension_name} plugin`);
 }
 
 function onunload() {
   // unload the mutation observers
+  console.log(unloads);
+  
   unloads.forEach((u) => u());
   unloads.clear();
   // remove the buttons

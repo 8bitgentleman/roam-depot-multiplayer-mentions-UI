@@ -103,12 +103,8 @@ const AttributeButton = ({
     
     useEffect(() => {
         if (isOpen) {
-        
-        // setOptions(optionsNode.children.map((t) => t.text));
-        // const regex = new RegExp(`^${attributeName}::\\s*`);
-        
+
         setCurrentValue(getTextByBlockUid(uid))
-        // setCurrentValue(getTextByBlockUid(uid).replace(`[[${attributeName}]]`, "").trim());
         }
     }, [isOpen]);
 
@@ -134,6 +130,7 @@ export const renderMentionsButton = (
       <AttributeButton attributeName={mentionsName} uid={blockUid} />,
       containerSpan
     );
+    
     // parent.appendChild(containerSpan);
     parent.insertBefore(containerSpan, parent.firstChild);
 
