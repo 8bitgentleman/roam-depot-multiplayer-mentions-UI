@@ -2,21 +2,8 @@ import React, { useEffect, useMemo, useRef, useState, ReactText } from "react";
 import ReactDOM from "react-dom";
 import { Classes, Button, Tabs, Tab, Card, MenuItem } from "@blueprintjs/core";
 import { Select } from "@blueprintjs/select";
-import createHTMLObserver from "roamjs-components/dom/createHTMLObserver";
-import getPageTitleByPageUid from "roamjs-components/queries/getPageTitleByPageUid";
-import getBlockUidFromTarget from "roamjs-components/dom/getBlockUidFromTarget";
-import getBasicTreeByParentUid from "roamjs-components/queries/getBasicTreeByParentUid";
-import getPageUidByPageTitle from "roamjs-components/queries/getPageUidByPageTitle";
-import createBlock from "roamjs-components/writes/createBlock";
-import { InputTextNode, PullBlock } from "roamjs-components/types";
-import getSubTree from "roamjs-components/util/getSubTree";
 import updateBlock from "roamjs-components/writes/updateBlock";
-import deleteBlock from "roamjs-components/writes/deleteBlock";
-import createPage from "roamjs-components/writes/createPage";
-import MenuItemSelect from "roamjs-components/components/MenuItemSelect";
-import addStyle from "roamjs-components/dom/addStyle";
 import getTextByBlockUid from "roamjs-components/queries/getTextByBlockUid";
-import { render as renderToast } from "roamjs-components/components/Toast";
 
 function swapNotificationState(str, newState) {
     const states = {
@@ -69,13 +56,13 @@ const AttributeButtonPopover = ({
         itemPredicate={itemPredicate}
         items={items}
         onItemSelect={(s) => {
-            const new_state_string = swapNotificationState(attributeName, s)
-            const new_block_string = currentValue.replace(`[[${attributeName}]]`, `[[${new_state_string}]]`)
-            
+          const new_state_string = swapNotificationState(attributeName, s);
+          const new_block_string = currentValue.replace(`[[${attributeName}]]`, `[[${new_state_string}]]`);
+          
           updateBlock({
             text: new_block_string,
             uid,
-          });
+          })
         }}
         activeItem={currentValue}
         filterable={filterable}
