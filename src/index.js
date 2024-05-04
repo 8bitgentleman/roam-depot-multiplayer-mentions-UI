@@ -10,7 +10,7 @@ const panelConfig = {
     {
       id: "watch-page",
       name: "Page To Watch",
-      description: "This is the tag where the mentions UI will show next to",
+      description: "This is the tag the mentions UI will show next to",
       action: {
         type: "input",
         placeholder: "Enter name to watch",
