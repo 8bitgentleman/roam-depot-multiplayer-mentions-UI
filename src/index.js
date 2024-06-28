@@ -93,7 +93,7 @@ async function spanObserverCallback(spanElement, extensionAPI) {
   const namesToObserve = await extensionAPI.settings.get("watch-page") || ['Default Name']; // Fetch dynamically
   const results = processBlock(spanElement, namesToObserve.split(',').map(name => name.trim()));
   if (results.length > 0) {
-    console.log(results);
+    // console.log(results);
   }
 }
 
@@ -111,7 +111,7 @@ const updateAttributeObserver = async (extensionAPI) => {
 
 async function onload({ extensionAPI }) {
   extensionAPI.settings.panel.create(panelConfig);
-  console.log(extensionAPI.settings.get("watch-page"));
+  // console.log(extensionAPI.settings.get("watch-page"));
   
   updateAttributeObserver(extensionAPI);
 }
