@@ -1,37 +1,32 @@
-import React, { useEffect, useMemo, useRef, useState, ReactText } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import { Classes, Button, Tabs, Tab, Card, MenuItem } from "@blueprintjs/core";
+import { Button, MenuItem } from "@blueprintjs/core";
 import { Select } from "@blueprintjs/select";
 import updateBlock from "roamjs-components/writes/updateBlock";
 import getTextByBlockUid from "roamjs-components/queries/getTextByBlockUid";
 
 function swapNotificationState(str, newState) {
     const states = {
-      "🚨 Notify": '@[[', // Notify state
-      "✅ Mark Read": '~[[', // Seen state
-      "📨 CC:": 'cc:[[' , // CC state
-      "💾 Bookmark": '^[[', // Bookmark state
-      "None": '' // No notification state
+      "🚨 Notify": '@[[',
+      "✅ Mark Read": '~[[',
+      "📨 CC:": 'cc:[[',
+      "💾 Bookmark": '^[[',
+      "None": ''
     };
 
-    // Build a regular expression to match any of the states or a standalone name
-    const regex = /(@|\~|cc:|\^)?\[\[(.*?)\]\]/g;
-
-    // Check if the string contains a notification state
-    if (regex.test(str)) {
-      // Replace the current state with the desired state
-      return str.replace(regex, (match, prefix, name) => {
-        return states[newState] + name + (states[newState] ? ']]' : '');
-      });
-    } else {
-      // If there's no match, and the new state is not "None", add the new state syntax
-      return newState !== "None" ? states[newState] + str + ']]' : str;
+    // Use a more robust parsing method
+    const parts = str.split('[[');
+    if (parts.length > 1) {
+      const name = parts[1].split(']]')[0];
+      return newState !== "None" 
+        ? `${states[newState]}${name}]]`
+        : name;
     }
-  }
+    return str;
+}
 
 const AttributeButtonPopover = ({
     items,
-    setIsOpen,
     attributeName,
     uid,
     currentValue,
@@ -73,7 +68,6 @@ const AttributeButtonPopover = ({
           style={{ minHeight: 15, minWidth: 20 }}
           intent="primary"
           minimal
-          onClick={() => setIsOpen(true)}
         />
       </AttributeSelect>
     );
@@ -83,21 +77,15 @@ const AttributeButton = ({
     attributeName,
     uid,
     }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    
-    const [options, setOptions] = useState(["🚨 Notify", "✅ Mark Read", "📨 CC:", "💾 Bookmark", "None"]);
+    const options = ["🚨 Notify", "✅ Mark Read", "📨 CC:", "💾 Bookmark", "None"];
     const [currentValue, setCurrentValue] = useState("");
     
     useEffect(() => {
-        if (isOpen) {
-
-        setCurrentValue(getTextByBlockUid(uid))
-        }
-    }, [isOpen]);
+        setCurrentValue(getTextByBlockUid(uid));
+    }, [uid]);
 
     return (
         <AttributeButtonPopover
-        setIsOpen={setIsOpen}
         items={options}
         attributeName={attributeName}
         uid={uid}
@@ -118,7 +106,5 @@ export const renderMentionsButton = (
       containerSpan
     );
     
-    // parent.appendChild(containerSpan);
     parent.insertBefore(containerSpan, parent.firstChild);
-
   };
