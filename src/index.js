@@ -1,5 +1,5 @@
 import getBlockUidFromTarget from "roamjs-components/dom/getBlockUidFromTarget";
-import { renderMentionsButton } from "./components/userMentionsSelect";
+import { renderMentionsButton, cleanup } from "./components/userMentionsSelect";
 import createHTMLObserver from "roamjs-components/dom/createHTMLObserver";
 import { NotificationStatesSetting } from "./components/SettingsComponents";
 
@@ -18,10 +18,17 @@ function processBlock(spanElement, name, states) {
   }
 }
 
+const DEFAULT_STATES = [
+  { name: "🚨 Notify", prefix: "@" },
+  { name: "✅ Mark Read", prefix: "~" },
+  { name: "📨 CC:", prefix: "cc:" },
+  { name: "💾 Bookmark", prefix: "^" }
+];
+
 // Callback function to be used with createHTMLObserver
 async function spanObserverCallback(spanElement, extensionAPI) {
   const nameToObserve = await extensionAPI.settings.get("watch-page") || '';
-  const states = await extensionAPI.settings.get("notification-states") || [];
+  const states = await extensionAPI.settings.get("notification-states") || DEFAULT_STATES;
   processBlock(spanElement, nameToObserve, states);
 }
 
@@ -77,6 +84,9 @@ function onunload() {
   elementsToRemove.forEach(element => {
     element.parentNode.removeChild(element);
   });
+  
+  // Cleanup the MutationObserver
+  cleanup();
   
   console.log(`unload ${extension_name} plugin`);
 }

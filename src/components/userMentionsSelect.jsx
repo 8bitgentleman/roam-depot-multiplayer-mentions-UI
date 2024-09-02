@@ -7,14 +7,24 @@ import getTextByBlockUid from "roamjs-components/queries/getTextByBlockUid";
 
 function swapNotificationState(str, newState, states) {
     const stateMap = Object.fromEntries(states.map(state => [state.name, state.prefix]));
+    const newPrefix = stateMap[newState];
 
-    const parts = str.split('[[');
-    if (parts.length > 1) {
-      const name = parts[1].split(']]')[0];
-      return newState !== "None" 
-        ? `${stateMap[newState]}${name}]]`
-        : name;
+    // Regular expression to match any prefix and the content within the brackets
+    const regex = /^(@|~|cc:|\^)?(\[\[.+?\]\])$/;
+
+    const match = str.match(regex);
+    if (match) {
+        const [, , content] = match;
+        if (newPrefix === "") {
+            // If the new prefix is empty, just return the content without any prefix
+            return content;
+        } else {
+            // Otherwise, add the new prefix
+            return `${newPrefix}${content}`;
+        }
     }
+    
+    // If the input doesn't match the expected format, return it unchanged
     return str;
 }
 
@@ -46,7 +56,7 @@ const AttributeButtonPopover = ({
         items={items}
         onItemSelect={(s) => {
           const new_state_string = swapNotificationState(attributeName, s, states);
-          const new_block_string = currentValue.replace(`[[${attributeName}]]`, `[[${new_state_string}]]`);
+          const new_block_string = currentValue.replace(attributeName, new_state_string);
           
           updateBlock({
             text: new_block_string,
@@ -90,17 +100,41 @@ const AttributeButton = ({
 };
 
 export const renderMentionsButton = (
-    parent,
-    mentionsName,
-    blockUid,
-    states
-  ) => {
-    const containerSpan = document.createElement("span");
-    containerSpan.onmousedown = (e) => e.stopPropagation();
-    ReactDOM.render(
-      <AttributeButton attributeName={mentionsName} uid={blockUid} states={states} />,
-      containerSpan
-    );
-    
-    parent.insertBefore(containerSpan, parent.firstChild);
-  };
+  parent,
+  mentionsName,
+  blockUid,
+  states
+) => {
+  // Check if there's already a menu for this tag
+  const existingMenu = parent.querySelector('.mentions-select-button');
+  if (existingMenu) {
+    // If a menu already exists, remove it
+    existingMenu.parentElement.remove();
+  }
+
+  const containerSpan = document.createElement("span");
+  containerSpan.onmousedown = (e) => e.stopPropagation();
+  containerSpan.className = 'mentions-menu-container'; // Add a class for easier identification
+
+  ReactDOM.render(
+    <AttributeButton attributeName={mentionsName} uid={blockUid} states={states} />,
+    containerSpan
+  );
+  
+  parent.insertBefore(containerSpan, parent.firstChild);
+};
+
+// Function to clean up orphaned menus
+const cleanupOrphanedMenus = () => {
+const orphanedMenus = document.querySelectorAll('.mentions-menu-container:not(:first-child)');
+orphanedMenus.forEach(menu => menu.remove());
+};
+
+// Add a mutation observer to clean up orphaned menus
+const observer = new MutationObserver(cleanupOrphanedMenus);
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Cleanup function to disconnect the observer when the extension is unloaded
+export const cleanup = () => {
+observer.disconnect();
+};

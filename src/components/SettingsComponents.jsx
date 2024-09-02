@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { Button, FormGroup, InputGroup } from "@blueprintjs/core";
 
+const DEFAULT_STATES = [
+  { name: "🚨 Notify", prefix: "@" },
+  { name: "✅ Mark Read", prefix: "~" },
+  { name: "📨 CC:", prefix: "cc:" },
+  { name: "💾 Bookmark", prefix: "^" }
+];
+
 export const NotificationStatesSetting = ({ extensionAPI }) => {
   const [states, setStates] = useState([]);
   const [newState, setNewState] = useState({ name: "", prefix: "" });
 
   useEffect(() => {
     const loadStates = async () => {
-      const savedStates = await extensionAPI.settings.get("notification-states") || [
-        { name: "🚨 Notify", prefix: "@[[" },
-        { name: "✅ Mark Read", prefix: "~[[" },
-        { name: "📨 CC:", prefix: "cc:[[" },
-        { name: "💾 Bookmark", prefix: "^[[" },
-        { name: "❌ None", prefix: "" }
-      ];
-      setStates(savedStates);
+      const savedStates = await extensionAPI.settings.get("notification-states");
+      if (savedStates === null || savedStates === undefined) {
+        // If no states are saved, set and save the default states
+        setStates(DEFAULT_STATES);
+        await extensionAPI.settings.set("notification-states", DEFAULT_STATES);
+      } else {
+        setStates(savedStates);
+      }
     };
     loadStates();
   }, [extensionAPI]);
