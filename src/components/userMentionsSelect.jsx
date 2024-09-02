@@ -1,25 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Button, MenuItem } from "@blueprintjs/core";
 import { Select } from "@blueprintjs/select";
 import updateBlock from "roamjs-components/writes/updateBlock";
 import getTextByBlockUid from "roamjs-components/queries/getTextByBlockUid";
 
-function swapNotificationState(str, newState) {
-    const states = {
-      "🚨 Notify": '@[[',
-      "✅ Mark Read": '~[[',
-      "📨 CC:": 'cc:[[',
-      "💾 Bookmark": '^[[',
-      "None": ''
-    };
+function swapNotificationState(str, newState, states) {
+    const stateMap = Object.fromEntries(states.map(state => [state.name, state.prefix]));
 
-    // Use a more robust parsing method
     const parts = str.split('[[');
     if (parts.length > 1) {
       const name = parts[1].split(']]')[0];
       return newState !== "None" 
-        ? `${states[newState]}${name}]]`
+        ? `${stateMap[newState]}${name}]]`
         : name;
     }
     return str;
@@ -30,6 +23,7 @@ const AttributeButtonPopover = ({
     attributeName,
     uid,
     currentValue,
+    states,
     filterable = false,
   }) => {
     const AttributeSelect = Select.ofType();
@@ -51,7 +45,7 @@ const AttributeButtonPopover = ({
         itemPredicate={itemPredicate}
         items={items}
         onItemSelect={(s) => {
-          const new_state_string = swapNotificationState(attributeName, s);
+          const new_state_string = swapNotificationState(attributeName, s, states);
           const new_block_string = currentValue.replace(`[[${attributeName}]]`, `[[${new_state_string}]]`);
           
           updateBlock({
@@ -76,8 +70,8 @@ const AttributeButtonPopover = ({
 const AttributeButton = ({
     attributeName,
     uid,
+    states,
     }) => {
-    const options = ["🚨 Notify", "✅ Mark Read", "📨 CC:", "💾 Bookmark", "None"];
     const [currentValue, setCurrentValue] = useState("");
     
     useEffect(() => {
@@ -86,10 +80,11 @@ const AttributeButton = ({
 
     return (
         <AttributeButtonPopover
-        items={options}
+        items={states.map(state => state.name)}
         attributeName={attributeName}
         uid={uid}
         currentValue={currentValue}
+        states={states}
         />
     );
 };
@@ -97,12 +92,13 @@ const AttributeButton = ({
 export const renderMentionsButton = (
     parent,
     mentionsName,
-    blockUid
+    blockUid,
+    states
   ) => {
     const containerSpan = document.createElement("span");
     containerSpan.onmousedown = (e) => e.stopPropagation();
     ReactDOM.render(
-      <AttributeButton attributeName={mentionsName} uid={blockUid} />,
+      <AttributeButton attributeName={mentionsName} uid={blockUid} states={states} />,
       containerSpan
     );
     
